@@ -136,6 +136,9 @@ app.get('/api/products/:id/analysis', (req, res) => {
             "product": row,
             "analysis": getAnalysis(row.productType)
         });
+    });
+});
+
 // 7. Chatbot Endpoint
 app.post('/api/chat', (req, res) => {
     const userMessage = req.body.message.toLowerCase();
