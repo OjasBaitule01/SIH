@@ -136,6 +136,35 @@ app.get('/api/products/:id/analysis', (req, res) => {
             "product": row,
             "analysis": getAnalysis(row.productType)
         });
+// 7. Chatbot Endpoint
+app.post('/api/chat', (req, res) => {
+    const userMessage = req.body.message.toLowerCase();
+    
+    db.all("SELECT * FROM products", [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ reply: "Database error." });
+            return;
+        }
+        
+        const total = rows.length;
+        const productsNames = rows.map(r => r.productName).join(", ");
+        
+        let reply = "";
+        
+        if (userMessage.includes('how many') || userMessage.includes('total')) {
+            reply = `You currently have ${total} products in your inventory.`;
+        } else if (userMessage.includes('what') && userMessage.includes('products')) {
+            reply = `Your products are: ${productsNames || 'None currently'}.`;
+        } else if (userMessage.includes('ip') || userMessage.includes('patent')) {
+            reply = "Based on Ayurvedic guidelines, polyherbal formulations may be patentable if they show synergistic novelty over traditional knowledge. Have you checked the TKDL yet?";
+        } else {
+            reply = `That's an interesting question about your ${total} products. Since I'm running in demo mode, I can tell you that you've built a fantastic IP portfolio so far!`;
+        }
+
+        // Fake network delay for realism
+        setTimeout(() => {
+            res.json({ reply });
+        }, 800);
     });
 });
 

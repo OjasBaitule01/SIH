@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Leaf, LayoutDashboard, PlusCircle, List } from 'lucide-react';
+import { Leaf, LayoutDashboard, PlusCircle, List, BarChart3 } from 'lucide-react';
+import ThemeMusicControls from './ThemeMusicControls';
+import Chatbot from './Chatbot';
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -17,6 +19,9 @@ const Layout = ({ children }) => {
         </div>
         
         <nav style={{ flex: 1, padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <Link to="/" className={`sidebar-link ${location.pathname === '/' ? 'active' : ''}`}>
+            <BarChart3 size={20} /> Dashboard
+          </Link>
           <Link to="/products" className={`sidebar-link ${location.pathname === '/products' ? 'active' : ''}`}>
             <List size={20} /> Inventory
           </Link>
@@ -34,15 +39,19 @@ const Layout = ({ children }) => {
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <header style={{ padding: '24px 40px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={{ fontSize: '1.4rem', margin: 0, color: 'var(--text-main)' }}>
-            {location.pathname === '/products' ? 'Product Inventory' : 
+            {location.pathname === '/' ? 'Main Dashboard' :
+             location.pathname === '/products' ? 'Product Inventory' : 
              location.pathname === '/products/new' ? 'Create New Product' : 
-             location.pathname.includes('/analysis') ? 'Product Analysis Dashboard' : 'IP-SAKTI ERP'}
+             location.pathname.includes('/analysis') ? 'Product Analysis' : 'IP-SAKTI ERP'}
           </h2>
+          <ThemeMusicControls />
         </header>
         <div style={{ padding: '40px', overflowY: 'auto', flex: 1 }}>
           {children}
         </div>
       </main>
+      
+      <Chatbot />
       
       <style>{`
         .sidebar-link {
