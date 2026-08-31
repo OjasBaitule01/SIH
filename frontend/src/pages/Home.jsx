@@ -21,7 +21,8 @@ const Home = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch('http://localhost:5000/api/products', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_URL}/api/products`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

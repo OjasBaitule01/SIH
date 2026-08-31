@@ -13,7 +13,8 @@ const ProductList = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/products');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_URL}/api/products`);
       const data = await res.json();
       setProducts(data.data);
     } catch (error) {
@@ -25,7 +26,8 @@ const ProductList = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
-      await fetch(`http://localhost:5000/api/products/${id}`, { method: 'DELETE' });
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      await fetch(`${API_URL}/api/products/${id}`, { method: 'DELETE' });
       fetchProducts();
     }
   };
