@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, Package, Globe, ShieldCheck } from 'lucide-react';
-import GoogleLoader from '../components/GoogleLoader';
 
 const MainDashboard = () => {
   const [stats, setStats] = useState({ total: 0, international: 0, formulations: 0 });
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,14 +21,10 @@ const MainDashboard = () => {
         });
       } catch (err) {
         console.error(err);
-      } finally {
-        setTimeout(() => setLoading(false), 1200); // Fake delay to show off Google Loader
       }
     };
     fetchStats();
   }, []);
-
-  if (loading) return <GoogleLoader />;
 
   return (
     <div className="animate-fade-in">
