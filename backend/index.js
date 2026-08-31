@@ -8,8 +8,9 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Initialize SQLite Database
-const db = new sqlite3.Database('./database.sqlite', (err) => {
+// Initialize SQLite Database (Use /tmp on Vercel Serverless)
+const dbPath = process.env.NODE_ENV === 'production' ? '/tmp/database.sqlite' : './database.sqlite';
+const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error("Error opening database " + err.message);
   } else {
@@ -139,11 +140,11 @@ app.get('/api/products/:id/analysis', (req, res) => {
     });
 });
 
-// 7. Chatbot Endpoint
+// 7. Chatbot Endpoint with Free Search (Wikipedia API)
 app.post('/api/chat', (req, res) => {
     const userMessage = req.body.message.toLowerCase();
     
-    db.all("SELECT * FROM products", [], (err, rows) => {
+    db.all("SELECT * FROM products", [], async (err, rows) => {
         if (err) {
             res.status(500).json({ reply: "Database error." });
             return;
@@ -156,18 +157,33 @@ app.post('/api/chat', (req, res) => {
         
         if (userMessage.includes('how many') || userMessage.includes('total')) {
             reply = `You currently have ${total} products in your inventory.`;
+            return res.json({ reply });
         } else if (userMessage.includes('what') && userMessage.includes('products')) {
             reply = `Your products are: ${productsNames || 'None currently'}.`;
+            return res.json({ reply });
         } else if (userMessage.includes('ip') || userMessage.includes('patent')) {
             reply = "Based on Ayurvedic guidelines, polyherbal formulations may be patentable if they show synergistic novelty over traditional knowledge. Have you checked the TKDL yet?";
+            return res.json({ reply });
         } else {
-            reply = `That's an interesting question about your ${total} products. Since I'm running in demo mode, I can tell you that you've built a fantastic IP portfolio so far!`;
+            // Free Search Engine Integration (Wikipedia API)
+            try {
+                // Extract what they are asking about (simple heuristic)
+                const query = req.body.message.replace(/what is|tell me about/ig, '').trim();
+                const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
+                if (wikiRes.ok) {
+                    const wikiData = await wikiRes.json();
+                    if (wikiData.extract) {
+                        reply = `Here is what I found from the web: ${wikiData.extract}`;
+                        return res.json({ reply });
+                    }
+                }
+                reply = `That's an interesting question about your ${total} products. Since I'm running in demo mode, I can tell you that you've built a fantastic IP portfolio! (I also tried searching the web for '${query}' but couldn't find a quick summary).`;
+                return res.json({ reply });
+            } catch (e) {
+                reply = `That's an interesting question about your ${total} products. I tried to search the web but encountered an error.`;
+                return res.json({ reply });
+            }
         }
-
-        // Fake network delay for realism
-        setTimeout(() => {
-            res.json({ reply });
-        }, 800);
     });
 });
 
