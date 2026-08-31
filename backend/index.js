@@ -9,16 +9,24 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Initialize MongoDB
+// Initialize MongoDB (Serverless-safe connection)
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://ojasbaitulebusiness01_db_user:4gO1POSA8d9AL5sY@cluster0.mltejdz.mongodb.net/sih?retryWrites=true&w=majority&appName=Cluster0";
 
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log("Connected to MongoDB successfully!");
-}).catch((err) => {
-    console.error("MongoDB connection error:", err);
+// Serverless Middleware: Ensure DB is connected before handling any route
+app.use(async (req, res, next) => {
+    if (mongoose.connection.readyState !== 1) {
+        try {
+            await mongoose.connect(MONGODB_URI, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true
+            });
+            console.log("Connected to MongoDB for Serverless execution.");
+        } catch (err) {
+            console.error("MongoDB connection error:", err);
+            return res.status(500).json({ error: "Database connection failed" });
+        }
+    }
+    next();
 });
 
 // Define Product Schema
