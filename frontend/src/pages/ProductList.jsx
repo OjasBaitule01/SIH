@@ -56,16 +56,16 @@ const ProductList = () => {
               </tr>
             ) : (
               products.map(p => (
-                <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                  <td style={{ padding: '16px 24px' }}>#{p.id}</td>
+                <tr key={p._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                  <td style={{ padding: '16px 24px' }}>#{p._id}</td>
                   <td style={{ padding: '16px 24px', fontWeight: '600' }}>{p.productName}</td>
                   <td style={{ padding: '16px 24px' }}><span className="badge badge-primary">{p.productType}</span></td>
                   <td style={{ padding: '16px 24px' }}>{p.targetMarket}</td>
                   <td style={{ padding: '16px 24px', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                    <button onClick={() => navigate(`/products/${p.id}/analysis`)} className="btn-secondary" style={{ padding: '8px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button onClick={() => navigate(`/products/${p._id}/analysis`)} className="btn-secondary" style={{ padding: '8px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <FileSearch size={16} /> Analyze IP
                     </button>
-                    <button onClick={() => handleDelete(p.id)} className="btn-secondary" style={{ padding: '8px', borderColor: 'rgba(244, 67, 54, 0.3)', color: 'var(--danger-color)' }}>
+                    <button onClick={() => handleDelete(p._id)} className="btn-secondary" style={{ padding: '8px', borderColor: 'rgba(244, 67, 54, 0.3)', color: 'var(--danger-color)' }}>
                       <Trash2 size={16} />
                     </button>
                   </td>

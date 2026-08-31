@@ -1,6 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const sqlite3 = require('sqlite3').verbose();
+const mongoose = require('mongoose');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -8,29 +9,31 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Initialize SQLite Database (Use /tmp on Vercel Serverless)
-const dbPath = process.env.NODE_ENV === 'production' ? '/tmp/database.sqlite' : './database.sqlite';
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error("Error opening database " + err.message);
-  } else {
-    db.run(`CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        productName TEXT,
-        productType TEXT,
-        targetMarket TEXT,
-        ingredients TEXT,
-        intendedUse TEXT,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`, (err) => {
-        if (err) {
-            console.log("Table already exists or error: ", err);
-        }
-    });
-  }
+// Initialize MongoDB
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://ojasbaitulebusiness01_db_user:4gO1POSA8d9AL5sY@cluster0.mltejdz.mongodb.net/sih?retryWrites=true&w=majority&appName=Cluster0";
+
+mongoose.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => {
+    console.log("Connected to MongoDB successfully!");
+}).catch((err) => {
+    console.error("MongoDB connection error:", err);
 });
 
-// Mock Analysis logic to replace the hardcoded response
+// Define Product Schema
+const productSchema = new mongoose.Schema({
+    productName: { type: String, required: true },
+    productType: { type: String, required: true },
+    targetMarket: { type: String, required: true },
+    ingredients: { type: String },
+    intendedUse: { type: String },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const Product = mongoose.model('Product', productSchema);
+
+// Mock Analysis logic
 const getAnalysis = (productType) => {
     return {
       classification: "Ayurvedic Proprietary Medicine",
@@ -46,112 +49,82 @@ const getAnalysis = (productType) => {
 // CRUD Endpoints
 
 // 1. Create a Product
-app.post('/api/products', (req, res) => {
-  const { productName, productType, targetMarket, ingredients, intendedUse } = req.body;
-  const insert = 'INSERT INTO products (productName, productType, targetMarket, ingredients, intendedUse) VALUES (?,?,?,?,?)';
-  db.run(insert, [productName, productType, targetMarket, ingredients, intendedUse], function(err) {
-      if (err) {
-          res.status(400).json({"error": err.message});
-          return;
-      }
-      res.json({
-          "message": "success",
-          "data": { id: this.lastID, productName, productType, targetMarket, ingredients, intendedUse }
-      });
-  });
+app.post('/api/products', async (req, res) => {
+    try {
+        const product = await Product.create(req.body);
+        res.json({ message: "success", data: product });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 // 2. Read all Products
-app.get('/api/products', (req, res) => {
-  const sql = "SELECT * FROM products ORDER BY createdAt DESC";
-  db.all(sql, [], (err, rows) => {
-      if (err) {
-        res.status(400).json({"error":err.message});
-        return;
-      }
-      res.json({
-          "message": "success",
-          "data": rows
-      });
-  });
+app.get('/api/products', async (req, res) => {
+    try {
+        const products = await Product.find().sort({ createdAt: -1 });
+        res.json({ message: "success", data: products });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 // 3. Read single product
-app.get('/api/products/:id', (req, res) => {
-  const sql = "SELECT * FROM products WHERE id = ?";
-  const params = [req.params.id];
-  db.get(sql, params, (err, row) => {
-      if (err) {
-        res.status(400).json({"error":err.message});
-        return;
-      }
-      res.json({
-          "message": "success",
-          "data": row
-      });
-  });
+app.get('/api/products/:id', async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) return res.status(404).json({ error: "Product not found" });
+        res.json({ message: "success", data: product });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 // 4. Update Product
-app.put('/api/products/:id', (req, res) => {
-    const { productName, productType, targetMarket, ingredients, intendedUse } = req.body;
-    db.run(
-        `UPDATE products set productName = ?, productType = ?, targetMarket = ?, ingredients = ?, intendedUse = ? WHERE id = ?`,
-        [productName, productType, targetMarket, ingredients, intendedUse, req.params.id],
-        function (err, result) {
-            if (err) {
-                res.status(400).json({"error": err.message});
-                return;
-            }
-            res.json({
-                message: "success",
-                changes: this.changes
-            });
-    });
+app.put('/api/products/:id', async (req, res) => {
+    try {
+        const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!product) return res.status(404).json({ error: "Product not found" });
+        res.json({ message: "success", data: product });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 // 5. Delete Product
-app.delete('/api/products/:id', (req, res) => {
-    db.run(
-        'DELETE FROM products WHERE id = ?',
-        req.params.id,
-        function (err, result) {
-            if (err) {
-                res.status(400).json({"error": err.message});
-                return;
-            }
-            res.json({"message":"deleted", changes: this.changes});
-    });
+app.delete('/api/products/:id', async (req, res) => {
+    try {
+        const product = await Product.findByIdAndDelete(req.params.id);
+        if (!product) return res.status(404).json({ error: "Product not found" });
+        res.json({ message: "deleted" });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 // 6. Get Product Analysis
-app.get('/api/products/:id/analysis', (req, res) => {
-    const sql = "SELECT * FROM products WHERE id = ?";
-    db.get(sql, [req.params.id], (err, row) => {
-        if (err || !row) {
-          res.status(404).json({"error": "Product not found"});
-          return;
-        }
+app.get('/api/products/:id/analysis', async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) return res.status(404).json({ error: "Product not found" });
+        
         res.json({
-            "message": "success",
-            "product": row,
-            "analysis": getAnalysis(row.productType)
+            message: "success",
+            product: product,
+            analysis: getAnalysis(product.productType)
         });
-    });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 // 7. Chatbot Endpoint with Free Search (Wikipedia API)
-app.post('/api/chat', (req, res) => {
+app.post('/api/chat', async (req, res) => {
     const userMessage = req.body.message.toLowerCase();
     
-    db.all("SELECT * FROM products", [], async (err, rows) => {
-        if (err) {
-            res.status(500).json({ reply: "Database error." });
-            return;
-        }
-        
-        const total = rows.length;
-        const productsNames = rows.map(r => r.productName).join(", ");
+    try {
+        const products = await Product.find();
+        const total = products.length;
+        const productsNames = products.map(r => r.productName).join(", ");
         
         let reply = "";
         
@@ -167,7 +140,6 @@ app.post('/api/chat', (req, res) => {
         } else {
             // Free Search Engine Integration (Wikipedia API)
             try {
-                // Extract what they are asking about (simple heuristic)
                 const query = req.body.message.replace(/what is|tell me about/ig, '').trim();
                 const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
                 if (wikiRes.ok) {
@@ -184,7 +156,9 @@ app.post('/api/chat', (req, res) => {
                 return res.json({ reply });
             }
         }
-    });
+    } catch (err) {
+        res.status(500).json({ reply: "Database error." });
+    }
 });
 
 if (process.env.NODE_ENV !== 'production') {
@@ -194,4 +168,3 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 module.exports = app;
-
