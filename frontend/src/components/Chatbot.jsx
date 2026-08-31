@@ -28,8 +28,7 @@ const Chatbot = () => {
     setLoading(true);
 
     try {
-      const API_URL = import.meta.env.PROD ? '' : 'http://localhost:5000';
-      const res = await fetch(`${API_URL}/api/chat`, {
+      const res = await fetch(`/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg })

@@ -14,8 +14,7 @@ const Dashboard = () => {
       try {
         // Mock a slight delay to simulate AI processing/RAG engine
         setTimeout(async () => {
-          const API_URL = import.meta.env.PROD ? '' : 'http://localhost:5000';
-          const res = await fetch(`${API_URL}/api/products/${id}/analysis`);
+          const res = await fetch(`/api/products/${id}/analysis`);
           if (res.ok) {
             const result = await res.json();
             setData(result);

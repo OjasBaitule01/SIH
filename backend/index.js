@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
+const mongoose = require('mongoose');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,10 +18,7 @@ const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://ojasbaitulebusines
 app.use(async (req, res, next) => {
     if (mongoose.connection.readyState !== 1) {
         try {
-            await mongoose.connect(MONGODB_URI, {
-                useNewUrlParser: true,
-                useUnifiedTopology: true
-            });
+            await mongoose.connect(MONGODB_URI);
             console.log("Connected to MongoDB for Serverless execution.");
         } catch (err) {
             console.error("MongoDB connection error:", err);
@@ -167,6 +166,29 @@ app.post('/api/chat', async (req, res) => {
     } catch (err) {
         res.status(500).json({ reply: "Database error." });
     }
+});
+
+// 8. Seed Dummy Data Endpoint
+app.post('/api/seed', async (req, res) => {
+    const dummyProducts = [
+        { productName: 'Triphala Churna', productType: 'formulation', targetMarket: 'Domestic & International', ingredients: 'Amalaki, Bibhitaki, Haritaki', intendedUse: 'Digestive health and detox.' },
+        { productName: 'Ashwagandha Extract', productType: 'extract', targetMarket: 'International', ingredients: 'Withania somnifera root', intendedUse: 'Stress relief and adaptogen.' },
+        { productName: 'Kumkumadi Tailam', productType: 'formulation', targetMarket: 'Domestic', ingredients: 'Saffron, Sandalwood, Sesame Oil', intendedUse: 'Skin brightening and anti-aging.' },
+        { productName: 'Brahmi Vati', productType: 'formulation', targetMarket: 'Domestic', ingredients: 'Bacopa monnieri, Shankhpushpi', intendedUse: 'Cognitive enhancement and memory support.' },
+        { productName: 'Neem & Turmeric Soap', productType: 'cosmetic', targetMarket: 'International', ingredients: 'Neem extract, Turmeric powder, Coconut oil base', intendedUse: 'Antibacterial skin cleansing.' }
+    ];
+    try {
+        await Product.insertMany(dummyProducts);
+        res.json({ message: "Dummy data inserted successfully!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 9. Catch-all for React Router (must be last)
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
 
 if (process.env.NODE_ENV !== 'production') {
