@@ -139,6 +139,11 @@ app.get('/api/products/:id/analysis', (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Backend Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
+
